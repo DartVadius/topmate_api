@@ -1,0 +1,97 @@
+version: '2'
+services:
+  nginx:
+    build:
+      context: ./
+      dockerfile: docker/nginx.docker
+    volumes:
+      - ./:/var/www:cached
+      - ./docker/nginx/ssl:/etc/nginx/ssl:cached
+    ports:
+      - "8003:80"
+    links:
+      - php-fpm
+  php-fpm:
+    build:
+      context: ./
+      dockerfile: docker/php-fpm.docker
+    volumes:
+      - ./:/var/www:cached
+    links:
+      - mysql
+      - redis
+      - elasticsearch
+      - rabbitmq
+    environment:
+      - "DB_PORT=3306"
+      - "DB_HOST=mysql"
+      - "REDIS_PORT=6379"
+      - "REDIS_HOST=redis"
+      - "ELASTICSEARCH_HOSTS=elasticsearch:9200"
+    depends_on:
+      - rabbitmq
+  php-cli:
+    build:
+      context: ./
+      dockerfile: docker/php-cli.docker
+    volumes:
+      - ./:/var/www:cached
+    links:
+      - redis
+      - elasticsearch
+      - rabbitmq
+      - mysql
+    environment:
+      - "DB_PORT=3306"
+      - "DB_HOST=mysql"
+      - "REDIS_PORT=6379"
+      - "REDIS_HOST=redis"
+      - "ELASTICSEARCH_HOSTS=elasticsearch:9200"
+    depends_on:
+      - rabbitmq
+    tty: true
+  mysql:
+    image: mysql:latest
+    volumes:
+      - ./storage/docker/mysql:/var/lib/mysql:cached
+    environment:
+      - "MYSQL_ROOT_PASSWORD=secret"
+      - "MYSQL_DATABASE=topmate"
+      - "MYSQL_USER=homestead"
+      - "MYSQL_PASSWORD=secret"
+    ports:
+      - "33061:3306"
+    command: "--default-authentication-plugin=mysql_native_password"
+  redis:
+    image: redis:3.0
+    ports:
+      - "63791:6379"
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: acme
+      RABBITMQ_DEFAULT_PASS: acme
+    ports:
+      - "56721:5672"
+    restart: always
+    volumes:
+      - ./storage/docker/rabbitmq:/var/lib/rabbitmq:cached
+  node:
+    image: node:12.10-alpine
+    volumes:
+      - ./:/var/www:cached
+    working_dir: /var/www
+    tty: true
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
+    environment:
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms128m -Xmx128m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./storage/docker/elasticsearch:/usr/share/elasticsearch/data:cached
+    ports:
+      - "9201:9200"
