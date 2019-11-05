@@ -55,11 +55,11 @@ class UserController extends Controller
     }
 
     /**
-     * details api
+     * user api
      *
      * @return Response
      */
-    public function details()
+    public function user()
     {
         $user = Auth::user();
         return response()->json(['success' => $user], Response::HTTP_OK);
