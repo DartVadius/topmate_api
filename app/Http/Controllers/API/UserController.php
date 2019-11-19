@@ -21,8 +21,10 @@ class UserController extends Controller
     {
         if (Auth::attempt(['email' => request('email'), 'password' => request('password')])) {
             $user = Auth::user();
-            $response['token'] = $user->createToken(env('APP_NAME', 'MyApp'))->accessToken;
-            return response()->json(['success' => $response], Response::HTTP_OK);
+            $user->createToken(env('APP_NAME', 'MyApp'));
+            $user = $user->toArray();
+            $user['access_token'] = $user->accessToken;
+            return response()->json(['success' => $user], Response::HTTP_OK);
         } else {
             return response()->json(['error' => 'Unauthorised'], Response::HTTP_UNAUTHORIZED);
         }
@@ -36,22 +38,24 @@ class UserController extends Controller
      */
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $validatedData = $request->validate([
             'name' => 'required',
             'email' => 'required|email',
             'password' => 'required',
             'password_repeat' => 'required|same:password',
         ]);
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], Response::HTTP_UNAUTHORIZED);
-        }
-        $input = $request->all();
-        $input['password'] = bcrypt($input['password']);
-        $input['status'] = User::ROLE_USER;
-        $user = User::create($input);
-        $response['token'] = $user->createToken(env('APP_NAME', 'MyApp'))->accessToken;
-        $response['name'] = $user->name;
-        return response()->json(['success' => $response], Response::HTTP_OK);
+
+        $validatedData['password'] = \Hash::make($validatedData['password']);
+        $validatedData['role'] = User::ROLE_USER;
+        /**
+         * @var $user User
+         */
+        $user = User::create($validatedData);
+        $user->createToken(env('APP_NAME', 'MyApp'));
+        $token = $user->accessToken;
+        $user = $user->toArray();
+        $user['access_token'] = $token;
+        return response()->json(['success' => $user], Response::HTTP_OK);
     }
 
     /**
