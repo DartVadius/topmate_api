@@ -3,7 +3,6 @@
 use Illuminate\Http\Request;
 Route::group([
     'namespace' => 'API',
-    'middleware' => 'cors',
 ], function(){
     Route::post('login', 'UserController@login');
     Route::post('register', 'UserController@register');
