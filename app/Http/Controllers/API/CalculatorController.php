@@ -34,8 +34,9 @@ class CalculatorController extends Controller
         return response()->json($carPart, Response::HTTP_OK);
     }
 
-    public function updateModel(Request $request, CarModels $carModel)
+    public function updateModel(Request $request, $carModelId)
     {
+        $carModel = CarModels::findOrFail($carModelId);
         $validatedData = $request->validate([
             'name' => 'required|string',
         ]);
@@ -45,8 +46,9 @@ class CalculatorController extends Controller
         return response()->json($carModel, Response::HTTP_OK);
     }
 
-    public function updatePart(Request $request, CarParts $carPart)
+    public function updatePart(Request $request, $carPartId)
     {
+        $carPart = CarParts::findOrFail($carPartId);
         $validatedData = $request->validate([
             'name' => 'required|string',
         ]);
@@ -56,18 +58,18 @@ class CalculatorController extends Controller
         return response()->json($carPart, Response::HTTP_OK);
     }
 
-    public function deleteModel(Request $request, CarModels $carModel)
+    public function deleteModel(Request $request, $carModelId)
     {
-
+        $carModel = CarModels::findOrFail($carModelId);
         $carModel->parts()->detach();
         $carModel->delete();
 
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    public function deletePart(Request $request, CarParts $carPart)
+    public function deletePart(Request $request, $carPartId)
     {
-
+        $carPart = CarParts::findOrFail($carPartId);
         $carPart->models()->detach();
         $carPart->delete();
 
@@ -77,7 +79,7 @@ class CalculatorController extends Controller
     public function getModels(Request $request)
     {
 
-        return response()->json(CarModels::all(), Response::HTTP_OK);
+        return response()->json(CarModels::all()->load('parts'), Response::HTTP_OK);
     }
 
     public function getParts(Request $request)
@@ -86,12 +88,15 @@ class CalculatorController extends Controller
         return response()->json(CarParts::all(), Response::HTTP_OK);
     }
 
-    public function update(Request $request, CarModels $carModel, CarParts $carPart)
+    public function attach(Request $request, $carModelId, $carPartId)
     {
-        $carModel->parts()->attach($carPart->id, [
-            'sqft' => 123,
-            'sqm' => 456
+        $carModel = CarModels::findOrFail($carModelId);
+        $carPart = CarParts::findOrFail($carPartId);
+        $validatedData = $request->validate([
+            'sqft' => 'required|numeric',
+            'sqm' => 'required|numeric',
         ]);
+        $carModel->parts()->attach($carPart->id, $validatedData);
 
         return response()->json($carModel->parts()->where('car_consumption.part_id', $carPart->id)->first(), Response::HTTP_OK);
     }
