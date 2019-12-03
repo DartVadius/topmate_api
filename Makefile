@@ -10,6 +10,9 @@ docker-build:
 composer-install:
 	docker-compose exec php-cli composer install
 
+composer-update:
+	docker-compose exec php-cli composer update
+
 test:
 	docker-compose exec php-cli vendor/bin/phpunit
 
