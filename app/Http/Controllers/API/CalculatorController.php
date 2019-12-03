@@ -101,6 +101,15 @@ class CalculatorController extends Controller
         return response()->json($carModel->parts()->where('car_consumption.part_id', $carPart->id)->first(), Response::HTTP_OK);
     }
 
+    public function detach(Request $request, $carModelId, $carPartId)
+    {
+        $carModel = CarModels::findOrFail($carModelId);
+        $carPart = CarParts::findOrFail($carPartId);
+        $carModel->parts()->detach($carPart->id);
+
+        return response()->json(null, Response::HTTP_NO_CONTENT);
+    }
+
     public function calculate(Request $request, CarModels $carModel, CarParts $carPart)
     {
 
