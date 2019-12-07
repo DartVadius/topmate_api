@@ -11,6 +11,7 @@ Route::group([
     Route::get('calculator/models', 'CalculatorController@getModels');
     Route::get('calculator/parts', 'CalculatorController@getParts');
     Route::get('calculator/models/{car_model_id}/parts/{car_part_id}', 'CalculatorController@calculate');
+    Route::post('contact', 'ContactController@store');
     # authorized routes
     Route::group(['middleware' => 'auth:api'], function(){
         Route::get('user', 'UserController@user');
@@ -28,6 +29,10 @@ Route::group([
             Route::delete('calculator/parts/{part_id}', 'CalculatorController@deletePart');
             Route::post('calculator/models/{car_model_id}/parts/{car_part_id}', 'CalculatorController@attach');
             Route::delete('calculator/models/{car_model_id}/parts/{car_part_id}', 'CalculatorController@detach');
+            # contact
+            Route::get('contact', 'ContactController@index');
+            Route::patch('contact/{contact_id}', 'ContactController@update');
+            Route::get('contact/viewed', 'ContactController@viewed');
         });
     });
 });
